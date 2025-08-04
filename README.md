@@ -15,8 +15,7 @@ Dự án này không chỉ là một ứng dụng chat, mà còn là một minh 
 
 Sơ đồ dưới đây mô tả kiến trúc tổng quan và luồng dữ liệu của hệ thống.
 
-![Tanin Architecture Diagram](https://your-image-hosting-url/tanin_architecture.png)
-*(Lưu ý: Bạn nên tự vẽ một sơ đồ kiến trúc bằng công cụ như [draw.io](https://draw.io) hoặc [Excalidraw](https://excalidraw.com/) và tải lên để lấy link)*
+![Tanin Architecture Diagram](demo/img.png)
 
 ---
 
@@ -68,8 +67,7 @@ Sơ đồ dưới đây mô tả kiến trúc tổng quan và luồng dữ liệ
     ```bash
     cp .env.example .env
     ```
-    *(Bạn có thể chỉnh sửa các giá trị trong file `.env` nếu muốn, nhưng các giá trị mặc định đã được cấu hình để chạy với Docker Compose.)*
-
+    
 3.  **Cài đặt các dependency:**
     Poetry sẽ đọc file `pyproject.toml`, giải quyết các dependency, và cài đặt chúng vào một môi trường ảo riêng biệt.
     ```bash
