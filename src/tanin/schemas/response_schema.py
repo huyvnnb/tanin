@@ -82,8 +82,7 @@ class ModelResponse(BaseModel, Generic[DataT]):
     success: bool = True
     message: Optional[str] = None
     data: Optional[DataT] = None
-    meta: Optional[PaginationMeta] = None
-    error: Optional[ErrorResponse] = None
+    errors: Optional[ErrorResponse] = None
 
     model_config = {
         "exclude_none": True
