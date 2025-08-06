@@ -20,20 +20,18 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file="././.env",
+        env_file=".env",
         env_ignore_empty=True,
         extra="ignore",
     )
     API_STR: str = "/api"
     SECRET_KEY: str
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-
     # JWT
-    ACCESS_TOKEN_EXPIRES: int = 900
-    ACCESS_TOKEN_SECRET: str
-    REFRESH_TOKEN_EXPIRES: int = 2592000
-    REFRESH_TOKEN_SECRET: str
+    # ACCESS_TOKEN_EXPIRES: int = 900
+    # ACCESS_TOKEN_SECRET: str
+    # REFRESH_TOKEN_EXPIRES: int = 2592000
+    # REFRESH_TOKEN_SECRET: str
 
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"

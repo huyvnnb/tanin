@@ -1,3 +1,11 @@
+import asyncio
+import sys
+
+from tanin.websocket import endpoints
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import time
 
 from fastapi import FastAPI
@@ -13,6 +21,7 @@ app = FastAPI()
 logger = logger.get_logger(Module.SYS)
 
 app.include_router(session_router.router)
+app.include_router(endpoints.router)
 
 app.add_exception_handler(APIException, api_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

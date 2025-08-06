@@ -14,6 +14,9 @@ class Module(Enum):
     APP = "APPLICATION"
     SYS = "SYSTEM"
 
+    # DB
+    DB = "DATABASE"
+
     # Base
     BASE_REPO = "BASE REPO"
 
