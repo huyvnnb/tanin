@@ -13,7 +13,9 @@ from tanin.core.config import settings
 from tanin.core.database import AsyncSessionDep
 from tanin.repository.user_repo import UserRepository
 from tanin.schemas.user_schema import ActiveUser
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, WebSocket
+
+from tanin.utils.helper import extract_user_from_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=11)
 
@@ -24,7 +26,7 @@ async def get_current_active_user(request: Request, session: AsyncSessionDep) ->
     token = request.headers.get('Authorization')
     if token and token.startswith('Bearer '):
         user_repo = UserRepository(session)
-        user = await user_repo.get_user_by_id(UUID(token.split(" ")[1]))
+        user = await user_repo.get_user_by_id(UUID(await extract_user_from_token(token.split(" ")[1])))
         if user:
             return ActiveUser(
                 id=user.id,
@@ -46,6 +48,42 @@ async def get_current_active_user(request: Request, session: AsyncSessionDep) ->
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid X-Client-ID format")
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+
+async def get_current_active_user_ws(websocket: WebSocket, session: AsyncSessionDep):
+    auth_header = websocket.headers.get('Authorization')
+    client_id_header = websocket.headers.get('X-Client-ID')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(" ")[1]
+        try:
+            user_repo = UserRepository(session)
+            user = await user_repo.get_user_by_id(UUID(await extract_user_from_token(token.split(" ")[1])))
+
+            if user:
+                return ActiveUser(
+                    id=user.id,
+                    display_name=user.display_name,
+                    is_anonymous=False,
+                    avatar=user.avatar
+                )
+        except Exception:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication token")
+            return
+
+    if client_id_header:
+        try:
+            validated_client_id = UUID(client_id_header)
+            return ActiveUser(
+                id=validated_client_id,
+                display_name='Stranger',
+                is_anonymous=True
+            )
+        except ValueError:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid X-Client-ID format")
+            return
+
+    await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication credentials")
 
 
 def _create_access_token_sync(subject: str | Any, expires_delta: timedelta) -> str:
