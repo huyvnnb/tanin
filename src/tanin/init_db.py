@@ -16,7 +16,7 @@ logger = logger.get_logger(Module.DB)
 async def init_db():
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-    logger.info("✅ Database created successfully.")
+    logger.info("Database created successfully.")
 
 
 async def main():

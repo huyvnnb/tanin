@@ -16,11 +16,14 @@ from tanin.schemas.user_schema import ActiveUser
 from fastapi import HTTPException, status, WebSocket
 
 from tanin.utils.helper import extract_user_from_token
+from tanin.utils import logger
+from tanin.utils.logger import Module
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=11)
 
 ALGORITHM = "HS256"
 
+logger = logger.get_logger(Module.SECURITY)
 
 async def get_current_active_user(request: Request, session: AsyncSessionDep) -> ActiveUser:
     token = request.headers.get('Authorization')
@@ -67,7 +70,8 @@ async def get_current_active_user_ws(websocket: WebSocket, session: AsyncSession
                     is_anonymous=False,
                     avatar=user.avatar
                 )
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Token invalid or user not found: {e}")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication token")
             return
 
@@ -80,9 +84,11 @@ async def get_current_active_user_ws(websocket: WebSocket, session: AsyncSession
                 is_anonymous=True
             )
         except ValueError:
+            logger.warning("Invalid anonymous client ID format")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid X-Client-ID format")
             return
 
+    logger.warning("No authentication headers found")
     await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication credentials")
 
 

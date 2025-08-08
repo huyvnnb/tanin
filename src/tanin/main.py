@@ -1,6 +1,8 @@
 import asyncio
 import sys
+from contextlib import asynccontextmanager
 
+from tanin.core.dependencies import get_connection_manager
 from tanin.websocket import endpoints
 
 if sys.platform == "win32":
@@ -17,8 +19,31 @@ from tanin.core.handlers import api_exception_handler, validation_exception_hand
 from tanin.utils import logger
 from tanin.utils.logger import Module
 
-app = FastAPI()
 logger = logger.get_logger(Module.SYS)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    manager = get_connection_manager()
+
+    logger.info("Server is starting up, initializing Pub/Sub listener...")
+    pubsub_listener_task = asyncio.create_task(manager.pubsub_listener())
+
+    yield
+
+    logger.info("Server is shutting down, cleaning up background tasks...")
+
+    pubsub_listener_task.cancel()
+    try:
+        await pubsub_listener_task
+    except asyncio.CancelledError:
+        logger.info("Pub/Sub listener task was cancelled successfully.")
+
+app = FastAPI(
+    title="Tanin",
+    lifespan=lifespan
+)
+
 
 app.include_router(session_router.router)
 app.include_router(endpoints.router)
@@ -35,7 +60,6 @@ async def log_process_time(request: Request, call_next):
     duration = time.time() - start_time
 
     log_message = f"{request.method} {request.url.path} took {round(duration * 1000, 2)}ms"
-    print(log_message)
     logger.info(log_message)
 
     return response

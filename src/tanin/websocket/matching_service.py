@@ -23,11 +23,10 @@ class MatchingService:
         if await self.redis.scard(self.WAITING_POOL_KEY) < 2:
             return None
 
-        user1_id_bytes, user2_id_bytes = await self.redis.spop(self.WAITING_POOL_KEY, 2)
+        user1_id, user2_id = await self.redis.spop(self.WAITING_POOL_KEY, 2)
+        if not user1_id or not user2_id:
+            return None
 
-        user1_id = str(user1_id_bytes.decode())
-        user2_id = str(user2_id_bytes.decode())
-        # user1_id, user2_id = await self.redis.spop(self.WAITING_POOL_KEY, 2)
         room_id = str(uuid.uuid4())
         room_key = f"{self.ROOM_INFO_KEY_PREFIX}{room_id}"
 
@@ -40,18 +39,19 @@ class MatchingService:
         return UUID(user1_id), UUID(user2_id), UUID(room_id)
 
     async def get_user_room_info(self, user_id: UUID) -> Optional[Tuple[UUID, UUID]]:
-        room_id_str = await self.redis.get(f"{self.USER_ROOM_KEY_PREFIX}{str(user_id)}")
+        room_id = await self.redis.get(f"{self.USER_ROOM_KEY_PREFIX}{str(user_id)}")
 
-        if not room_id_str:
+        if not room_id:
             return None
 
-        room_id = UUID(room_id_str.decode())
+        room_id = UUID(room_id)
         room_key = f"{self.ROOM_INFO_KEY_PREFIX}{room_id}"
 
         user1_id, user2_id = await self.redis.hmget(room_key, ["user1", "user2"])
-        user1_id, user2_id = user1_id.decode(), user2_id.decode()
+        if not user1_id or not user2_id:
+            return None
 
-        partner_id = user1_id if user_id == user2_id else user2_id
+        partner_id = user2_id if str(user_id) == user1_id else user1_id
         return room_id, UUID(partner_id)
 
     async def leave_room(self, user_id: UUID) -> Optional[UUID]:

@@ -65,5 +65,7 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
+    REDIS_URL: str = "redis://localhost:6379/0"
+
 
 settings = Settings()

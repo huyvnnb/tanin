@@ -1,15 +1,11 @@
-import json
 import uuid
-from typing import Union
-from uuid import UUID
 
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
 
-from tanin.core.database import get_redis_client
+from tanin.core.dependencies import get_matching_service, get_connection_manager
 from tanin.core.security import get_current_active_user_ws
 from tanin.schemas.chat_schema import ClientEvent, StartSearchingEvent, MatchedEvent, SendTextMessageEvent, ChatMessage, \
     NewTextMessageEvent, LeaveRoomEvent, PartnerLeftEvent
-from tanin.schemas.response_schema import ModelResponse
 from tanin.schemas.user_schema import ActiveUser
 from tanin.utils.logger import Module
 from tanin.websocket.connection_manager import ConnectionManager
@@ -22,25 +18,35 @@ router = APIRouter()
 logger = logger.get_logger(Module.WEBSOCKET)
 
 
-redis_client = get_redis_client()
-manager = ConnectionManager(redis_client)
-matching_service = MatchingService(redis_client)
-
-
-@router.on_event("startup")
-async def startup_event():
-    import asyncio
-    asyncio.create_task(manager.pubsub_listener())
+async def handle_user_departure(
+    user: ActiveUser,
+    manager: ConnectionManager,
+    matching_service: MatchingService
+):
+    print(f"INFO: Handling departure for user {user.id}")
+    await manager.disconnect(user.id)
+    partner_id = await matching_service.leave_room(user.id)
+    if partner_id:
+        print(f"INFO: User {user.id} left room. Notifying partner {partner_id}")
+        await manager.broadcast_event_to_user(PartnerLeftEvent(), partner_id)
+    await matching_service.remove_from_pool(user.id)
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, user: ActiveUser = Depends(get_current_active_user_ws)):
+async def websocket_endpoint(
+        websocket: WebSocket,
+        user: ActiveUser = Depends(get_current_active_user_ws),
+        manager: ConnectionManager = Depends(get_connection_manager),
+        matching_service: MatchingService = Depends(get_matching_service)
+):
     await manager.connect(websocket, user.id)
     try:
         while True:
             data = await websocket.receive_json()
+            logger.info(data)
             try:
                 event = pydantic.parse_obj_as(ClientEvent, data)
+                logger.info(event)
             except pydantic.ValidationError:
                 continue
 
@@ -53,6 +59,9 @@ async def websocket_endpoint(websocket: WebSocket, user: ActiveUser = Depends(ge
                     user1_info = {"id": user1_id, "display_name": "Stranger"}
                     user2_info = {"id": user2_id, "display_name": "Stranger"}
 
+                    logger.info(user1_info)
+                    logger.info(user2_info)
+
                     await manager.broadcast_event_to_user(MatchedEvent(room_id=room_id, partner=user2_info), user1_id)
                     await manager.broadcast_event_to_user(MatchedEvent(room_id=room_id, partner=user1_info), user2_id)
 
@@ -63,6 +72,10 @@ async def websocket_endpoint(websocket: WebSocket, user: ActiveUser = Depends(ge
 
                 _, partner_id = room_info
                 chat_message = ChatMessage(id=uuid.uuid4(), sender_id=user.id, content=event.content)
+
+                logger.info(room_info)
+                logger.info(chat_message)
+
                 await manager.broadcast_event_to_user(NewTextMessageEvent(message=chat_message), partner_id)
 
             elif isinstance(event, LeaveRoomEvent):

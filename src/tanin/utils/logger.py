@@ -13,6 +13,8 @@ BOLD = "\x1b[1m"
 class Module(Enum):
     APP = "APPLICATION"
     SYS = "SYSTEM"
+    CONFIG = "CONFIG"
+    SECURITY = "SECURITY"
 
     # DB
     DB = "DATABASE"
