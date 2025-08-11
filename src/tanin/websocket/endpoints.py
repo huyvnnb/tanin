@@ -5,7 +5,9 @@ from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
 from tanin.core.dependencies import get_matching_service, get_connection_manager
 from tanin.core.security import get_current_active_user_ws
 from tanin.schemas.chat_schema import ClientEvent, StartSearchingEvent, MatchedEvent, SendTextMessageEvent, ChatMessage, \
-    NewTextMessageEvent, LeaveRoomEvent, PartnerLeftEvent
+    NewTextMessageEvent, LeaveRoomEvent, PartnerLeftEvent, WebRTCOfferEvent, WebRTCAnswerEvent, WebRTCICECandidateEvent, \
+    PartnerWebRTCOfferEvent, PartnerWebRTCAnswerEvent, PartnerWebRTCICECandidateEvent, VideoCallInitiateEvent, \
+    StartWebRTCNegotiationEvent, PartnerWantsVideoEvent
 from tanin.schemas.user_schema import ActiveUser
 from tanin.utils.logger import Module
 from tanin.websocket.connection_manager import ConnectionManager
@@ -19,9 +21,9 @@ logger = logger.get_logger(Module.WEBSOCKET)
 
 
 async def handle_user_departure(
-    user: ActiveUser,
-    manager: ConnectionManager,
-    matching_service: MatchingService
+        user: ActiveUser,
+        manager: ConnectionManager,
+        matching_service: MatchingService
 ):
     print(f"INFO: Handling departure for user {user.id}")
     await manager.disconnect(user.id)
@@ -78,6 +80,56 @@ async def websocket_endpoint(
 
                 await manager.broadcast_event_to_user(NewTextMessageEvent(message=chat_message), partner_id)
 
+            elif isinstance(event, VideoCallInitiateEvent):
+                room_info = await matching_service.get_user_room_info(user.id)
+                if not room_info:
+                    continue
+
+                room_id, partner_id = room_info
+                await matching_service.set_user_ready_for_video(room_id, user.id)
+
+                both_ready = await matching_service.check_if_both_ready_for_video(room_id)
+                if both_ready:
+                    logger.info(f"Both users in room {room_id} are ready for video. Initiating negotiation.")
+                    await manager.broadcast_event_to_user(StartWebRTCNegotiationEvent(should_create_offer=True), user.id)
+                    await manager.broadcast_event_to_user(StartWebRTCNegotiationEvent(should_create_offer=False), partner_id)
+
+                else:
+                    logger.info(f"User {user.id} wants video. Notifying partner {partner_id}.")
+                    await manager.broadcast_event_to_user(PartnerWantsVideoEvent(), partner_id)
+
+            elif isinstance(event, WebRTCOfferEvent):
+                room_info = await matching_service.get_user_room_info(user.id)
+                if not room_info: continue
+                _, partner_id = room_info
+
+                await manager.broadcast_event_to_user(
+                    PartnerWebRTCOfferEvent(sdp=event.sdp),
+                    partner_id
+                )
+
+            elif isinstance(event, WebRTCAnswerEvent):
+                room_info = await matching_service.get_user_room_info(user.id)
+                if not room_info:
+                    continue
+                _, partner_id = room_info
+
+                await manager.broadcast_event_to_user(
+                    PartnerWebRTCAnswerEvent(sdp=event.sdp),
+                    partner_id
+                )
+
+            elif isinstance(event, WebRTCICECandidateEvent):
+                room_info = await matching_service.get_user_room_info(user.id)
+                if not room_info:
+                    continue
+                _, partner_id = room_info
+
+                await manager.broadcast_event_to_user(
+                    PartnerWebRTCICECandidateEvent(candidate=event.candidate),
+                    partner_id
+                )
+
             elif isinstance(event, LeaveRoomEvent):
                 partner_id = await matching_service.leave_room(user.id)
                 if partner_id:
@@ -90,7 +142,6 @@ async def websocket_endpoint(
             await manager.broadcast_event_to_user(PartnerLeftEvent(), partner_id)
 
         await matching_service.remove_from_pool(user.id)
-
 
 # =================================
 # @router.get("/find/{client_id}",
@@ -141,4 +192,3 @@ async def websocket_endpoint(
 #     except Exception as e:
 #         logger.error(f"Lỗi xảy ra với {conversation_id}: {e}")
 #         await manager.disconnect(conversation_id)
-

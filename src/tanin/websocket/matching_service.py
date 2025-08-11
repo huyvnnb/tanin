@@ -54,6 +54,22 @@ class MatchingService:
         partner_id = user2_id if str(user_id) == user1_id else user1_id
         return room_id, UUID(partner_id)
 
+    async def set_user_ready_for_video(self, room_id: UUID, user_id: UUID):
+        room_key = f"{self.ROOM_INFO_KEY_PREFIX}{room_id}"
+        room_data = await self.redis.hgetall(room_key)
+
+        if not room_data:
+            return
+
+        user_field = "user1_ready_video" if room_data.get("user1") == str(user_id) else "user2_ready_video"
+        await self.redis.hset(room_key, user_field, "1")
+
+    async def check_if_both_ready_for_video(self, room_id: UUID) -> bool:
+        room_key = f"{self.ROOM_INFO_KEY_PREFIX}{room_id}"
+        ready_states = await self.redis.hmget(room_key, ["user1_ready_video", "user2_ready_video"])
+
+        return all(state == "1" for state in ready_states if state is not None)
+
     async def leave_room(self, user_id: UUID) -> Optional[UUID]:
         room_info = await self.get_user_room_info(user_id)
 

@@ -25,6 +25,7 @@ ALGORITHM = "HS256"
 
 logger = logger.get_logger(Module.SECURITY)
 
+
 async def get_current_active_user(request: Request, session: AsyncSessionDep) -> ActiveUser:
     token = request.headers.get('Authorization')
     if token and token.startswith('Bearer '):
@@ -53,7 +54,30 @@ async def get_current_active_user(request: Request, session: AsyncSessionDep) ->
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
 
-async def get_current_active_user_ws(websocket: WebSocket, session: AsyncSessionDep):
+async def get_current_active_user_ws(
+        websocket: WebSocket,
+        # session: AsyncSessionDep,
+        # token: str | None,
+        client_id: str | None
+) -> ActiveUser:
+    if client_id:
+        try:
+            validated_client_id = UUID(client_id)
+            return ActiveUser(
+                id=validated_client_id,
+                display_name='Stranger',
+                is_anonymous=True
+            )
+        except ValueError:
+            logger.warning("Invalid anonymous client ID format")
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid X-Client-ID format")
+            return
+
+    logger.warning("No authentication headers found")
+    await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication credentials")
+
+
+async def get_current_active_user_ws_v2(websocket: WebSocket, session: AsyncSessionDep):
     auth_header = websocket.headers.get('Authorization')
     client_id_header = websocket.headers.get('X-Client-ID')
 

@@ -55,12 +55,12 @@ class ConnectionManager:
 #     async def connect(self, websocket: WebSocket, user_id: str):
 #         await websocket.accept()
 #         self.active_connections[user_id] = websocket
-#         print(f"Người dùng {user_id} đã kết nối. Hiện có {len(self.active_connections)} kết nối.")
+#         logger.info(f"Người dùng {user_id} đã kết nối. Hiện có {len(self.active_connections)} kết nối.")
 #
 #     def disconnect(self, user_id: str):
 #         if user_id in self.active_connections:
 #             del self.active_connections[user_id]
-#             print(f"Người dùng {user_id} đã ngắt kết nối.")
+#             logger.info(f"Người dùng {user_id} đã ngắt kết nối.")
 #
 #     async def send_personal_message(self, message: str, user_id: str):
 #         if user_id in self.active_connections:

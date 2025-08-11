@@ -2,6 +2,7 @@ import asyncio
 import sys
 from contextlib import asynccontextmanager
 
+from tanin.core.config import settings
 from tanin.core.dependencies import get_connection_manager
 from tanin.websocket import endpoints
 
@@ -12,12 +13,13 @@ import time
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from tanin.api.endpoints import session_router
+from tanin.api.endpoints import session_router, webrtc_router
 from tanin.core.exceptions import APIException
 from fastapi import Request
 from tanin.core.handlers import api_exception_handler, validation_exception_handler, general_exception_handler
 from tanin.utils import logger
 from tanin.utils.logger import Module
+from starlette.middleware.cors import CORSMiddleware
 
 logger = logger.get_logger(Module.SYS)
 
@@ -47,10 +49,20 @@ app = FastAPI(
 
 app.include_router(session_router.router)
 app.include_router(endpoints.router)
+app.include_router(webrtc_router.router)
 
 app.add_exception_handler(APIException, api_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
+
+if settings.all_cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.all_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.middleware("http")

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Literal, Union
 from uuid import UUID
 
-from pydantic import BaseModel, UUID4, Field
+from pydantic import BaseModel, Field
 
 
 class ChatMessage(BaseModel):
@@ -25,7 +25,31 @@ class LeaveRoomEvent(BaseModel):
     event_type: Literal["leave_room"] = "leave_room"
 
 
-ClientEvent = Union[SendTextMessageEvent, StartSearchingEvent, LeaveRoomEvent]
+# WebRTC
+class WebRTCOfferEvent(BaseModel):
+    event_type: Literal["webrtc_offer"] = "webrtc_offer"
+    sdp: dict
+
+
+class WebRTCAnswerEvent(BaseModel):
+    event_type: Literal["webrtc_answer"] = "webrtc_answer"
+    sdp: dict
+
+
+class WebRTCICECandidateEvent(BaseModel):
+    event_type: Literal["webrtc_ice_candidate"] = "webrtc_ice_candidate"
+    candidate: dict
+
+
+class VideoCallInitiateEvent(BaseModel):
+    event_type: Literal["video_call_initiate"] = "video_call_initiate"
+
+
+ClientEvent = Union[
+    SendTextMessageEvent, StartSearchingEvent, LeaveRoomEvent,
+    WebRTCOfferEvent, WebRTCAnswerEvent, WebRTCICECandidateEvent,
+    VideoCallInitiateEvent
+]
 
 
 class MatchedEvent(BaseModel):
@@ -48,7 +72,42 @@ class ErrorEvent(BaseModel):
     message: str
 
 
-ServerEvent = Union[MatchedEvent, NewTextMessageEvent, PartnerLeftEvent, ErrorEvent]
+class PartnerWebRTCOfferEvent(BaseModel):
+    event_type: Literal["partner_webrtc_offer"] = "partner_webrtc_offer"
+    sdp: dict
+
+
+class PartnerWebRTCAnswerEvent(BaseModel):
+    event_type: Literal["partner_webrtc_answer"] = "partner_webrtc_answer"
+    sdp: dict
+
+
+class PartnerWebRTCICECandidateEvent(BaseModel):
+    event_type: Literal["partner_webrtc_ice_candidate"] = "partner_webrtc_ice_candidate"
+    candidate: dict
+
+
+class PartnerWantsVideoEvent(BaseModel):
+    event_type: Literal["partner_wants_video"] = "partner_wants_video"
+
+
+class StartWebRTCNegotiationEvent(BaseModel):
+    event_type: Literal["start_webrtc_negotiation"] = "start_webrtc_negotiation"
+    # Server decides who will create OFFER
+    should_create_offer: bool
+
+
+ServerEvent = Union[
+    MatchedEvent,
+    NewTextMessageEvent,
+    PartnerLeftEvent,
+    ErrorEvent,
+    PartnerWebRTCOfferEvent,
+    PartnerWebRTCAnswerEvent,
+    PartnerWebRTCICECandidateEvent,
+    PartnerWantsVideoEvent,
+    StartWebRTCNegotiationEvent
+]
 
 # =================================
 # class ChatFind(BaseModel):
