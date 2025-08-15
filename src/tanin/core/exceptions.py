@@ -28,9 +28,18 @@ class NotFoundException(APIException):
     error = ErrorResponse(code="NOT_FOUND", message="The requested resource was not found.")
 
 
+class UserExistException(APIException):
+    status_code = 409
+    detail = "User already exists."
+
+
 class UserNotFoundException(NotFoundException):
     error = ErrorResponse(code="USER_NOT_FOUND", message="A user with the given ID was not found.")
 
+
+class UnauthorizedException(APIException):
+    status_code = 401
+    error = ErrorResponse(code="UNAUTHORIZED", message="Account is invalid.")
 
 class ForbiddenException(APIException):
     status_code = 403

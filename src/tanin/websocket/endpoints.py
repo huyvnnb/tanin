@@ -25,11 +25,11 @@ async def handle_user_departure(
         manager: ConnectionManager,
         matching_service: MatchingService
 ):
-    print(f"INFO: Handling departure for user {user.id}")
+    logger.info(f"Handling departure for user {user.id}")
     await manager.disconnect(user.id)
     partner_id = await matching_service.leave_room(user.id)
     if partner_id:
-        print(f"INFO: User {user.id} left room. Notifying partner {partner_id}")
+        logger.info(f"User {user.id} left room. Notifying partner {partner_id}")
         await manager.broadcast_event_to_user(PartnerLeftEvent(), partner_id)
     await matching_service.remove_from_pool(user.id)
 

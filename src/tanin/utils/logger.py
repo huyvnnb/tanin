@@ -39,6 +39,11 @@ class Module(Enum):
     # Chat
     WEBSOCKET = "WEBSOCKET"
 
+    # Auth
+    AUTH_SERVICE = "AUTH SERVICE"
+    AUTH_ROUTER = "AUTH ROUTER"
+    SESSION_ROUTER = "SESSION ROUTER"
+
 
 class UvicornLikeFormatter(logging.Formatter):
     LEVEL_COLOR = {

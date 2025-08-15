@@ -1,9 +1,9 @@
+import asyncio
 from typing import AsyncGenerator, Annotated
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlmodel import create_engine
-from sqlmodel.ext.asyncio.session import AsyncSession
-from fastapi import Depends
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from fastapi import Depends, Request
 from tanin.core.config import settings
 from redis.asyncio import Redis, from_url
 from tanin.utils import logger
@@ -11,13 +11,9 @@ from tanin.utils.logger import Module
 
 logger = logger.get_logger(Module.CONFIG)
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-async_engine = create_async_engine(str(settings.SQLALCHEMY_DATABASE_URI), echo=True)
-AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False, autoflush=False, autocommit=False)
 
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
+async def get_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
+    async with request.app.state.session_factory() as session:
         yield session
 
 
