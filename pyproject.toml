@@ -5,6 +5,7 @@ description = ""
 authors = [
     {name = "huyvnnb",email = "huyqktk@gmail.com"}
 ]
+packages = [{ include = "tanin", from = "src" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
