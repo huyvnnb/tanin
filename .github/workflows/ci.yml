@@ -51,14 +51,14 @@ jobs:
           pip install poetry
           poetry install --no-interaction --no-root
 
-      - name: Init database
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-        run: poetry run python -m tanin.init_db
+#      - name: Init database
+#        env:
+#          POSTGRES_HOST: localhost
+#          POSTGRES_PORT: 5432
+#          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+#          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+#          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+#        run: poetry run python -m tanin.init_db
 
   build-and-push:
     runs-on: ubuntu-latest
