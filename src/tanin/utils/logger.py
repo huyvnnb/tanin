@@ -15,6 +15,8 @@ class Module(Enum):
     SYS = "SYSTEM"
     CONFIG = "CONFIG"
     SECURITY = "SECURITY"
+    DEP = "DEPENDENCY"
+    MID = "MIDDLEWARE"
 
     # DB
     DB = "DATABASE"

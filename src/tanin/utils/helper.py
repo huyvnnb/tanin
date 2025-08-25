@@ -1,8 +1,6 @@
 import jwt
 
-from tanin.core import security
 from tanin.core.config import settings
-from tanin.repository.user_repo import UserRepository
 from tanin.schemas.token_schema import TokenPayload
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -11,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def extract_user_from_token(token: str):
+    from tanin.core import security
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]

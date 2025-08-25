@@ -2,7 +2,9 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from tanin.core.config import settings
-from tanin.core.dependencies import get_connection_manager
+from tanin.core.database import get_redis_client
+from tanin.core.dependencies import get_connection_manager, get_token_bucket_manager
+from tanin.middlewares.token_bucket import TokenBucketManager, RateLimitMiddleware
 from tanin.websocket import endpoints
 
 import time
@@ -28,6 +30,12 @@ async def lifespan(app: FastAPI):
     logger.info("Docs: http://localhost:8000/docs")
 
     manager = get_connection_manager()
+    redis_client = get_redis_client()
+    token_bucket_manager = TokenBucketManager(
+        redis_client=redis_client,
+        capacity=settings.RATE_LIMIT_CAPACITY,
+        refill_rate=settings.RATE_LIMIT_REFILL_RATE
+    )
 
     logger.info("Server is starting up, initializing Pub/Sub listener...")
     pubsub_listener_task = asyncio.create_task(manager.pubsub_listener())
@@ -43,7 +51,8 @@ async def lifespan(app: FastAPI):
 
     app.state.async_engine = async_engine  # type: ignore[attr-defined]
     app.state.session_factory = session_factory  # type: ignore[attr-defined]
-
+    app.state.redis_client = redis_client
+    app.state.token_bucket_manager = token_bucket_manager
     yield
 
     logger.info("Server is shutting down, cleaning up background tasks...")
@@ -70,6 +79,8 @@ app.add_exception_handler(APIException, api_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
+app.add_middleware(RateLimitMiddleware)
+
 if settings.all_cors_origins:
     app.add_middleware(
         CORSMiddleware,
@@ -93,5 +104,5 @@ async def log_process_time(request: Request, call_next):
 
 
 @app.get("/")
-def hello():
+async def hello():
     return {"message": "Welcome to Tanin API"}

@@ -25,6 +25,14 @@ class LeaveRoomEvent(BaseModel):
     event_type: Literal["leave_room"] = "leave_room"
 
 
+class StartTypingEvent(BaseModel):
+    event_type: Literal["start_typing"] = "start_typing"
+
+
+class StopTypingEvent(BaseModel):
+    event_type: Literal["stop_typing"] = "stop_typing"
+
+
 # WebRTC
 class WebRTCOfferEvent(BaseModel):
     event_type: Literal["webrtc_offer"] = "webrtc_offer"
@@ -47,6 +55,7 @@ class VideoCallInitiateEvent(BaseModel):
 
 ClientEvent = Union[
     SendTextMessageEvent, StartSearchingEvent, LeaveRoomEvent,
+    StartTypingEvent, StopTypingEvent,
     WebRTCOfferEvent, WebRTCAnswerEvent, WebRTCICECandidateEvent,
     VideoCallInitiateEvent
 ]
@@ -67,9 +76,18 @@ class PartnerLeftEvent(BaseModel):
     event_type: Literal["partner_left"] = "partner_left"
 
 
+class PartnerIsTypingEvent(BaseModel):
+    event_type: Literal["partner_is_typing"] = "partner_is_typing"
+
+
+class PartnerStoppedTypingEvent(BaseModel):
+    event_type: Literal["partner_stopped_typing"] = "partner_stopped_typing"
+
+
 class ErrorEvent(BaseModel):
     event_type: Literal["error"] = "error"
     message: str
+
 
 
 class PartnerWebRTCOfferEvent(BaseModel):

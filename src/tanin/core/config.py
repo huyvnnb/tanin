@@ -66,6 +66,8 @@ class Settings(BaseSettings):
         )
 
     REDIS_URL: str = "redis://localhost:6379/0"
+    RATE_LIMIT_CAPACITY: int = 5
+    RATE_LIMIT_REFILL_RATE: float = 1.0
 
 
 settings = Settings()

@@ -44,5 +44,5 @@ async def login(user: UserLogin, session: AsyncSessionDep):
 
     return ModelResponse(
         data=response,
-        message="Create account successfully."
+        message="Login successfully."
     )
