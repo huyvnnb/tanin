@@ -1,7 +1,7 @@
 # Tanin (他人) - Anonymous Real-time Chat
 
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-311/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/your-username/tanin-app/main.yml?branch=main)](https://github.com/your-username/tanin-app/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/huyvnnb/tanin/main.yml?branch=main)](https://github.com/your-username/tanin-app/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 

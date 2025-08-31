@@ -2,9 +2,10 @@ from tanin.core.exceptions import UserExistException, UserNotFoundException, Una
 from tanin.core.security import get_password_hash, verify_password
 from tanin.models.user_model import User
 from tanin.repository.user_repo import UserRepository
-from tanin.schemas.user_schema import UserRegister, UserLogin, UserResponse
+from tanin.schemas.user_schema import UserRegister, UserLogin, UserResponse, LoginResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from tanin.utils import logger
+from tanin.utils.helper import create_jwt_token
 from tanin.utils.logger import Module
 
 logger = logger.get_logger(Module.AUTH_SERVICE)
@@ -44,9 +45,6 @@ class AuthService:
         if not verified:
             raise UnauthorizedException()
 
-        return UserResponse(
-            id=exist_user.id,
-            username=exist_user.username,
-            display_name=exist_user.display_name,
-            avatar=exist_user.avatar
-        )
+        token_payload = {"sub": str(exist_user.id), "username": exist_user.username}
+        access_token = create_jwt_token(data=token_payload)
+        return LoginResponse(access_token=access_token)

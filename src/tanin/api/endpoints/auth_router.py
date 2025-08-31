@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from tanin.core.database import AsyncSessionDep
 from tanin.schemas.response_schema import ModelResponse
-from tanin.schemas.user_schema import UserRegister, UserResponse, UserLogin
+from tanin.schemas.user_schema import UserRegister, UserResponse, UserLogin, LoginResponse
 from tanin.services.auth_service import AuthService
 from fastapi import status
 from tanin.utils import logger
@@ -35,7 +35,7 @@ async def register(user: UserRegister, session: AsyncSessionDep):
 @router.post(
     "/login",
     status_code=status.HTTP_200_OK,
-    response_model=ModelResponse[UserResponse],
+    response_model=ModelResponse[LoginResponse],
     response_model_exclude_none=True,
 )
 async def login(user: UserLogin, session: AsyncSessionDep):

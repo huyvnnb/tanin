@@ -6,6 +6,10 @@ from redis.asyncio import Redis
 from fastapi import WebSocket
 
 from tanin.schemas.chat_schema import ServerEvent
+from tanin.utils import logger
+from tanin.utils.logger import Module
+
+log = logger.get_logger(Module.WEBSOCKET)
 
 
 class ConnectionManager:
@@ -32,6 +36,7 @@ class ConnectionManager:
             'recipient_id': str(user_id),
             'event_data': event.model_dump_json()
         }
+        log.info(message)
         await self.redis.publish(self.pubsub_channel, json.dumps(message))
 
     async def pubsub_listener(self):

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -32,4 +32,9 @@ class UserResponse(BaseModel):
     username: str
     display_name: str
     avatar: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    type: Literal["bearer"] = "bearer"
     

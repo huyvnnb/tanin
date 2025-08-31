@@ -69,5 +69,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_CAPACITY: int = 5
     RATE_LIMIT_REFILL_RATE: float = 1.0
 
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+
 
 settings = Settings()

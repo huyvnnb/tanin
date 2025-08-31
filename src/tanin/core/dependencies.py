@@ -10,7 +10,7 @@ from tanin.websocket.connection_manager import ConnectionManager
 from tanin.websocket.matching_service import MatchingService
 from tanin.utils import logger
 
-logger = logger.get_logger(Module.DEP)
+logger = logger.get_logger(Module.DEPS)
 
 
 @lru_cache(maxsize=None)
